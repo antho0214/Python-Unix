@@ -8,14 +8,18 @@ def conversion(verilog_file, vhdl_file):
         # Écrit la déclaration de l'entité VHDL
         file.write(f"entity {module_name} is\n")
 
+
         # Gestion des ports
+        file.write("port (")
         for element in ports:
+            downto = element[1].split(":")
+            print("aaa",downto[0][1:])
+            print("b", downto[1][:1])
             if element[0] == 'input':
-                file.write(f"port ({element[1]} : in std_logic;\n")
+                file.write(f"{element[2]} : in std_logic_vector ({downto[0][1:]} downto {downto[1][:1]});\n")
             elif element[0] == 'output':
-                file.write(f"{element[1]} : out std_logic);\n")
-
-
+                file.write(f"{element[2]} : out std_logic_vector ({downto[0][1:]} downto {downto[1][:1]})\n")
+        file.write(");\n")
 
         file.write(f"end {module_name};\n")
 
@@ -37,21 +41,29 @@ def conversion(verilog_file, vhdl_file):
             vhdl_line = vhdl_line.replace("&", "and")
             vhdl_line = vhdl_line.replace("|", "or")
             vhdl_line = vhdl_line.replace("~", "not ")
+            vhdl_line = vhdl_line.replace("]", ")")
+            vhdl_line = vhdl_line.replace("[", "(")
             vhdl_line = vhdl_line.rstrip(";")
             file.write(f"{vhdl_line};\n")
             boolean_counter += 1
         print(f"{boolean_counter} boolean operators were created")
         file.write(f"end {full_adder_struct};\n")
+        testbench_generation('test1')
 
 
 def traitement_verilog(verilog_file):
-    # Lis le fichier Verilog
-    with open(verilog_file, 'r') as file:
-        lines = file.readlines()
+    try :
+        # Lis le fichier Verilog
+        with open(verilog_file, 'r') as file:
+            lines = file.readlines()
+    except Exception as e:
+        print(e)
 
     # Initialisation des variables
     module_name = None
+    global ports
     ports = []
+
     wire = []
     assign = []
 
@@ -68,6 +80,7 @@ def traitement_verilog(verilog_file):
         # Chercher les ports (input, output, inout)
         if line.startswith("input") or line.startswith("output"):
             parts = line.replace(";", "").split()
+            print(parts)
             ports.append(parts)
 
         # Chercher les déclarations "wire"
@@ -82,6 +95,31 @@ def traitement_verilog(verilog_file):
 
     # Retourne les données extraites
     return module_name, ports, wire, assign
+
+
+def testbench_generation(entity):
+    print("aaa",ports)
+
+    vhdl_file = 'test_bench_struct'
+    output_file = open(entity, 'w')
+    with open(vhdl_file, 'r') as file:
+        content = file.readlines()
+        #print(content)
+        for element in content:
+            #print(element)
+            output_file.write(element.format(entity = entity))
+
+        for element in ports:
+            port = element[2]
+            print(port)
+            output_file.write(element.format(port_in = port, port_out = port))
+
+
+
+
+
+
+
 
 
 

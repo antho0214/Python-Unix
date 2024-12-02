@@ -1,0 +1,12 @@
+Library IEEE;
+use IEEE.std_logic_1164.all;
+use std.textio.all;
+
+entity test1_tb is
+end test1_tb;
+
+architecture a_test1_tb of test1_tb is
+
+constant C_FILE_NAME :string  := "DataOut.dat";
+
+component test1 is
