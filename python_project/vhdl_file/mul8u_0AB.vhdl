@@ -1,7 +1,10 @@
+Library IEEE;
+use IEEE.std_logic_1164.all;
+use std.textio.all;
 entity mul8u_0AB is
-port (A : in std_logic_vector (7 downto 0);
-B : in std_logic_vector (7 downto 0);
-O : out std_logic_vector (15 downto 0)
+port (A : in std_logic_vector(7 downto 0);
+B : in std_logic_vector(7 downto 0);
+O : out std_logic_vector(15 downto 0)
 );
 end mul8u_0AB;
 architecture mul8u_0AB_struct of mul8u_0AB is
@@ -266,7 +269,7 @@ O(9) <= sig_309;
 O(8) <= sig_304;
 O(7) <= sig_272;
 O(6) <= sig_229;
-O(5) <= 1'b0;
+O(5) <= '0';
 O(4) <= B(0);
 O(3) <= sig_172;
 O(2) <= B(0);

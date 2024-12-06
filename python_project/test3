@@ -1,0 +1,112 @@
+Library IEEE;
+use IEEE.std_logic_1164.all;
+use std.textio.all;
+
+entity test3_tb is
+end test3_tb;
+
+architecture a_test3_tb of test3_tb is
+
+constant C_FILE_NAME :string  := "DataOut.dat";
+
+component test3 is
+    port (
+        A,B : in std_logic;
+        O : out std_logic
+    );
+end component;
+
+signal sA, sB, sO : std_logic;
+
+file fptr: text;
+
+begin
+
+UUT : test3 port map(sA, sB, sO);
+
+stimuli : process
+
+variable fstatus       : file_open_status;
+variable file_line     : line;
+variable correct_outp 	       : integer := 0;
+
+begin
+
+file_open(fstatus, fptr, C_FILE_NAME, write_mode);
+
+sA <= '0';
+sB <= '0';
+
+wait for 10 ns;
+
+if (sO = '0') then
+   correct_outp := correct_outp +1;
+end if;
+
+write(file_line, correct_outp);
+writeline(fptr, file_line);
+
+sA <= '0';
+sB <= '1';
+
+wait for 10 ns;
+
+if (sO = '0') then
+   correct_outp := correct_outp +1;
+end if;
+
+write(file_line, correct_outp);
+writeline(fptr, file_line);
+sA <= '1';
+sB <= '0';
+
+wait for 10 ns;
+
+if (sO = '0') then
+   correct_outp := correct_outp +1;
+end if;
+
+write(file_line, correct_outp);
+writeline(fptr, file_line);
+
+sA <= '1';
+sB <= '1';
+
+wait for 10 ns;
+
+if (sO = '1') then
+   correct_outp := correct_outp +1;
+end if;
+
+write(file_line, correct_outp);
+writeline(fptr, file_line);
+
+
+
+
+file_close(fptr);
+
+wait;
+
+end process;
+
+end a_test3_tb;
+
+
+library IEEE;
+use IEEE.std_logic_1164.all;
+use IEEE.std_logic_arith.all;
+use IEEE.std_logic_unsigned.all;
+
+entity test3 is
+generic (gate_delay : time := 1 ns);
+port ( A, B : in std_logic;
+O : out std_logic);
+end test3;
+
+architecture comp_test3 of test3 is
+begin
+
+	O <= A and B after gate_delay;
+
+end comp_test3;

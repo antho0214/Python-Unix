@@ -1,4 +1,4 @@
-Library IEEE;
+library IEEE;
 use IEEE.std_logic_1164.all;
 use std.textio.all;
 
@@ -7,14 +7,16 @@ end {entity}_tb;
 
 architecture a_{entity}_tb of {entity}_tb is
 
-constant C_FILE_NAME :string  := "DataOut.dat";
+constant C_FILE_NAME :string  := "{entity}_DataOut.dat";
 
 component {entity} is
-port ( {port_in} : in std_logic;
-{port_out} : out std_logic);
+port ( A, B : in STD_LOGIC_VECTOR (7 downto 0);
+       O : out STD_LOGIC_VECTOR (15 downto 0)
+);
 end component;
 
-signal sA, sB, sO : std_logic;
+signal sA, sB : STD_LOGIC_VECTOR (7 downto 0);
+signal sO : STD_LOGIC_VECTOR (15 downto 0);
 
 file fptr: text;
 
@@ -26,61 +28,19 @@ stimuli : process
 
 variable fstatus       : file_open_status;
 variable file_line     : line;
-variable correct_outp 	       : integer := 0;
+variable correct_outp  : integer := 0;
 
 begin
 
 file_open(fstatus, fptr, C_FILE_NAME, write_mode);
 
-sA <= '0';
-sB <= '0';
+-- Initialisation des signaux
+sA <= "00000000";
+sB <= "00000000";
 
 wait for 10 ns;
 
-if (sO = '0') then
-   correct_outp := correct_outp +1;
-end if;
-
-write(file_line, correct_outp);
-writeline(fptr, file_line);
-
-sA <= '0';
-sB <= '1';
-
-wait for 10 ns;
-
-if (sO = '0') then
-   correct_outp := correct_outp +1;
-end if;
-
-write(file_line, correct_outp);
-writeline(fptr, file_line);
-sA <= '1';
-sB <= '0';
-
-wait for 10 ns;
-
-if (sO = '0') then
-   correct_outp := correct_outp +1;
-end if;
-
-write(file_line, correct_outp);
-writeline(fptr, file_line);
-
-sA <= '1';
-sB <= '1';
-
-wait for 10 ns;
-
-if (sO = '1') then
-   correct_outp := correct_outp +1;
-end if;
-
-write(file_line, correct_outp);
-writeline(fptr, file_line);
-
-
-
+{stimuli_block} -- Place where the generated stimuli will be inserted
 
 file_close(fptr);
 
@@ -90,21 +50,36 @@ end process;
 
 end a_{entity}_tb;
 
+library IEEE;
+use IEEE.std_logic_1164.all;
+use IEEE.numeric_std.all;
+
+entity mul8u_T83 is
+generic (gate_delay : time := 1 ns);
+port ( A, B : in STD_LOGIC_VECTOR (7 downto 0);
+O : out STD_LOGIC_VECTOR (15 downto 0));
+end mul8u_T83;
+
+architecture comp_mul8u_T83 of mul8u_T83 is
+begin
+	O <= std_logic_vector(unsigned(A) * unsigned(B)) after gate_delay;
+
+
+end comp_mul8u_T83;
 
 library IEEE;
 use IEEE.std_logic_1164.all;
-use IEEE.std_logic_arith.all;
-use IEEE.std_logic_unsigned.all;
+use IEEE.numeric_std.all;
 
 entity {entity} is
 generic (gate_delay : time := 1 ns);
-port ( A, B : in std_logic;
-O : out std_logic);
+port ( A, B : in STD_LOGIC_VECTOR (7 downto 0);
+O : out STD_LOGIC_VECTOR (15 downto 0));
 end {entity};
 
 architecture comp_{entity} of {entity} is
 begin
+	O <= std_logic_vector(unsigned(A) * unsigned(B)) after gate_delay;
 
-	O <= A and B after gate_delay;
 
 end comp_{entity};

@@ -1,0 +1,29 @@
+$date
+  Fri Dec 06 12:11:25 2024
+$end
+$version
+  GHDL v0
+$end
+$timescale
+  1 fs
+$end
+$var reg 8 ! a[7:0] $end
+$var reg 8 " b[7:0] $end
+$var reg 16 # o[15:0] $end
+$var reg 1 $ sig_71 $end
+$var reg 1 % sig_79 $end
+$var reg 1 & sig_293 $end
+$var reg 1 ' sig_338 $end
+$var reg 1 ( sig_340 $end
+$var reg 1 ) sig_345 $end
+$enddefinitions $end
+#0
+bUUUUUUUU !
+bUUUUUUUU "
+bUUUUU00UU0000U00 #
+U$
+U%
+U&
+U'
+U(
+U)

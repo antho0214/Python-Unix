@@ -1,3 +1,4 @@
+import re
 def conversion(verilog_file, vhdl_file):
     boolean_counter = 0
     # Traite le fichier Verilog et obtient les informations nécessaires
@@ -6,6 +7,7 @@ def conversion(verilog_file, vhdl_file):
     # Ouvre le fichier VHDL pour l'écriture
     with open(vhdl_file, 'w') as file:
         # Écrit la déclaration de l'entité VHDL
+        file.write("Library IEEE;\nuse IEEE.std_logic_1164.all;\nuse std.textio.all;\n")
         file.write(f"entity {module_name} is\n")
 
 
@@ -13,12 +15,13 @@ def conversion(verilog_file, vhdl_file):
         file.write("port (")
         for element in ports:
             downto = element[1].split(":")
-            print("aaa",downto[0][1:])
-            print("b", downto[1][:1])
+
             if element[0] == 'input':
-                file.write(f"{element[2]} : in std_logic_vector ({downto[0][1:]} downto {downto[1][:1]});\n")
+                std1 = f"std_logic_vector({downto[0][1:]} downto {downto[1][:1]});"
+                file.write(f"{element[2]} : in {std1}\n")
             elif element[0] == 'output':
-                file.write(f"{element[2]} : out std_logic_vector ({downto[0][1:]} downto {downto[1][:1]})\n")
+                std2 = f"std_logic_vector({downto[0][1:]} downto {downto[1][:1]})"
+                file.write(f"{element[2]} : out {std2}\n")
         file.write(");\n")
 
         file.write(f"end {module_name};\n")
@@ -43,13 +46,21 @@ def conversion(verilog_file, vhdl_file):
             vhdl_line = vhdl_line.replace("~", "not ")
             vhdl_line = vhdl_line.replace("]", ")")
             vhdl_line = vhdl_line.replace("[", "(")
+            # Remplacer les nombres binaires après '0'b et '1'b et les encapsuler entre des apostrophes
+            vhdl_line = re.sub(r"(0'b|1'b)([01]+)", r"'\2'", vhdl_line)
+
             vhdl_line = vhdl_line.rstrip(";")
+
+
             file.write(f"{vhdl_line};\n")
             boolean_counter += 1
         print(f"{boolean_counter} boolean operators were created")
         file.write(f"end {full_adder_struct};\n")
-        testbench_generation('test1')
+        tb_file = vhdl_file.split('.')[0] + '_tb.vhdl'
+        print(tb_file)
+        testbench_generation(tb_file,module_name)
 
+        return module_name
 
 def traitement_verilog(verilog_file):
     try :
@@ -61,7 +72,7 @@ def traitement_verilog(verilog_file):
 
     # Initialisation des variables
     module_name = None
-    global ports
+
     ports = []
 
     wire = []
@@ -80,7 +91,7 @@ def traitement_verilog(verilog_file):
         # Chercher les ports (input, output, inout)
         if line.startswith("input") or line.startswith("output"):
             parts = line.replace(";", "").split()
-            print(parts)
+
             ports.append(parts)
 
         # Chercher les déclarations "wire"
@@ -97,29 +108,51 @@ def traitement_verilog(verilog_file):
     return module_name, ports, wire, assign
 
 
-def testbench_generation(entity):
-    print("aaa",ports)
+def block(module_name):
+    # Créer la liste des lignes de stimuli à ajouter
+    stimuli_lines = []
 
+    sB = 0
+    for k in range(1, 257):  # Itère de 1 à 256 pour sB
+        sA = 0
+        for i in range(1, 150):  # Itère de 1 à 149 pour sA
+            # Formatage des stimuli pour sA et sB
+            stimulus = f'sA <= "{format(sA, "08b")}";\n'
+            stimulus += f'sB <= "{format(sB, "08b")}";\n'
+            stimulus += 'wait for 10 ns;\n'
+
+            # Comparaison de la sortie sO avec la multiplication de sA et sB
+            stimulus += f'if (sO = "{format(sA * sB, "016b")}") then\n'
+            stimulus += '\tcorrect_outp := correct_outp +1;\n'
+            stimulus += 'end if;\n'
+
+            # Écriture dans le fichier de résultats
+            stimulus += 'write(file_line, correct_outp);\n'
+            stimulus += 'writeline(fptr, file_line);\n'
+
+            # Ajouter chaque stimulus à la liste
+            stimuli_lines.append(stimulus)
+
+            sA += 1  # Incrémente sA pour chaque itération
+        sB += 1  # Incrémente sB après chaque boucle de sA
+
+    # Retourner les lignes de stimuli générées sous forme de texte
+    return "\n".join(stimuli_lines)
+
+def testbench_generation(entity, module_name):
+    # Ouvre le fichier de structure du testbench
     vhdl_file = 'test_bench_struct'
     output_file = open(entity, 'w')
+
     with open(vhdl_file, 'r') as file:
         content = file.readlines()
-        #print(content)
+
+        # Crée un testbench en remplaçant les placeholders dans le modèle
         for element in content:
-            #print(element)
-            output_file.write(element.format(entity = entity))
-
-        for element in ports:
-            port = element[2]
-            print(port)
-            output_file.write(element.format(port_in = port, port_out = port))
-
-
-
-
-
-
-
-
-
-
+            # Remplace le placeholder {stimuli_block} par les stimuli générés par block()
+            if "{stimuli_block}" in element:
+                stimuli = block(module_name)  # Génère les stimuli
+                output_file.write(element.replace("{stimuli_block}", stimuli))
+            else:
+                # Remplace les autres clés comme {entity} dans le testbench
+                output_file.write(element.format(port_in="A, B", port_out="O", entity=module_name))
